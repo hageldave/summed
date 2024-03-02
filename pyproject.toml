@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "summed"
+version = "0.0.1"
+description = "A mini software package for summed"
+authors = [
+  { name = "David Hägele", email = "haegele.david@gmail.com" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/hageldave/summed"
+"Bug Tracker" = "https://github.com/hageldave/summed/issues"
