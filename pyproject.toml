@@ -18,7 +18,8 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-  "numpy"
+  "numpy",
+  "scipy"
 ]
 
 [project.urls]
