@@ -31,7 +31,8 @@ def create_application(doc):
     def onchangedoproj(a,b,c):
         arr = np.vstack([cds.data['xs'][0], cds.data['ys'][0]]).T
         segments = arr[1:,:]-arr[:-1,]
-        segments = projection.normalize_rows(segments)
+        #segments = projection.normalize_rows(segments)
+        segments = projection.normalize_path_length(segments)
         pmat = projection.summed_dirs(segments, 2)
         arr2 = arr @ pmat
 

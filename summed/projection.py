@@ -1,4 +1,7 @@
+import math
+import random
 import numpy as np
+import scipy as sp
 
 def normalize_vec(vec: np.ndarray) -> np.ndarray:
   """
@@ -20,8 +23,16 @@ def normalize_rows(data: np.ndarray) -> np.ndarray:
       normalize_vec(data[i]) for i in range(data.shape[0])
   ])
 
+def normalize_path_length(data: np.ndarray) -> np.ndarray:
+  """
+  Normalize each row of the data matrix so that the sum of the lengths equals 1
+  """
+  pathlen = np.linalg.norm(data, axis=1).sum()
+  data = data / pathlen
+  pathlen2 = np.linalg.norm(data, axis=1).sum()
+  return data
 
-def summed_dir(dat: np.ndarray) -> np.ndarray:
+def _summed_dir(dat: np.ndarray) -> np.ndarray:
   """
   Computes the 'summed directions' vector.
   """
@@ -42,7 +53,7 @@ def summed_dirs(dat: np.ndarray, numDirs) -> np.ndarray:
   """
   dirs = np.array([])
   for i in range(0, numDirs):
-    dir = summed_dir_2(dat)
+    dir = summed_dir(dat)
     dir_as_col = dir[:,None]
     dirs = np.hstack((dirs, dir_as_col)) if dirs.size else dir_as_col
     scale = dat @ dir_as_col
@@ -64,22 +75,7 @@ def summed_dir_projection_and_transform(dat: np.ndarray) -> tuple[np.ndarray, np
   data_proj = dat @ proj_mat
   return data_proj, proj_mat
 
-def summed_dirs_2(dat: np.ndarray, numDirs) -> np.ndarray:
-  """
-  Computes a set of 'summed directions 2' vectors.
-  For the (i+1)th vector the ith vector's direction is removed from the data
-  and then the remaining data is used to compute the sum.
-  """
-  dirs = np.array([])
-  for i in range(0, numDirs):
-    dir = summed_dir(dat)
-  dir_as_col = dir[:, None]
-  dirs = np.hstack((dirs, dir_as_col)) if dirs.size else dir_as_col
-  scale = dat @ dir_as_col
-  dat = dat - (scale * dir)
-  return dirs
-
-def summed_dir_2(dat: np.ndarray) -> np.ndarray:
+def summed_dir(dat: np.ndarray) -> np.ndarray:
   """
   Computes the 'summed directions' vector.
   """
@@ -121,12 +117,11 @@ def summed_dir_2(dat: np.ndarray) -> np.ndarray:
     return sum
 
   x0 = normalize_vec(np.random.rand(dat.shape[1]))
-  print(f"diff obective {objctv(x0) - objective(x0)}")
-  print(f"diff jac {grad(x0) - grad2(x0)}")
+  #print(f"diff obective {objctv(x0) - objective(x0)}")
+  #print(f"diff jac {grad(x0) - grad2(x0)}")
 
-  import scipy as sp
   check = sp.optimize.check_grad(objective, jac, x0=x0)
-  print(check)
+  #print(check)
 
   def constr(p):
     return (p*p).sum()
@@ -148,7 +143,40 @@ def summed_dir_2(dat: np.ndarray) -> np.ndarray:
   # dir = scaled.sum(axis=0)
   # return normalize_vec(dir))
 
+def test1():
+  dat = np.random.rand(7,3) *2 -1
+  dat = np.hstack([dat,dat*1.2 +.1])
+  # mu
+  mu = (dat**2).sum(axis=1)[:,None] * dat
+  mu = mu.sum(axis=0)
+  # cov
+  cov = dat.T @ dat
+  lam = 4.44  #random.random()
+  reg = lam*np.eye(cov.shape[0])
+  sum_inv = np.linalg.inv(cov + reg)
+  inv_sum = np.linalg.inv(cov) + np.linalg.inv(reg)
+  print(np.linalg.norm(sum_inv @ mu, ord=2))
+  print(np.linalg.norm(mu, ord=2))
+  print(np.linalg.norm(sum_inv, ord=2)*np.linalg.norm(mu, ord=2))
+
+def test2():
+  dat = np.random.rand(7, 3) * 2 - 1
+  dat = np.hstack([dat, dat * 1.2 + .1])
+  # mu
+  #mu = (dat ** 2).sum(axis=1)[:, None] * dat
+  mu = dat.sum(axis=0)
+  cov = dat.T @ dat
+
+
+
+
+
+
+
+  
+
 
 if __name__ == '__main__':
-  data = np.random.rand(3, 2) * 10 - 5
-  summed_dir_2(data)
+  test2()
+  #data = np.random.rand(3, 2) * 10 - 5
+  #summed_dir_2(data)
