@@ -2,6 +2,8 @@ import math
 import random
 import numpy as np
 import scipy as sp
+import autograd.numpy as anp
+import pymanopt
 
 def normalize_vec(vec: np.ndarray) -> np.ndarray:
   """
@@ -75,7 +77,7 @@ def summed_dir_projection_and_transform(dat: np.ndarray) -> tuple[np.ndarray, np
   data_proj = dat @ proj_mat
   return data_proj, proj_mat
 
-def summed_dir(dat: np.ndarray) -> np.ndarray:
+def summed_dir_scipyopt(dat: np.ndarray) -> np.ndarray:
   """
   Computes the 'summed directions' vector.
   """
@@ -86,6 +88,7 @@ def summed_dir(dat: np.ndarray) -> np.ndarray:
       xi = dat[i,:]
       sum += np.linalg.norm(np.dot(p,xi) * xi - xi)**2
     return sum
+
 
   def objective(p):
     projections = dat @ p[:,None]
@@ -135,6 +138,7 @@ def summed_dir(dat: np.ndarray) -> np.ndarray:
   print(res)
   return res.x
 
+
   # # calculate square norms for each row of dat
   # norms2 = (dat**2).sum(axis=1)
   # # scale each row of dat by respective squared norm
@@ -142,6 +146,33 @@ def summed_dir(dat: np.ndarray) -> np.ndarray:
   # # sum all rows up
   # dir = scaled.sum(axis=0)
   # return normalize_vec(dir))
+
+def summed_dir(dat: np.ndarray) -> np.ndarray:
+  """
+  Computes the 'summed directions' vector.
+  """
+  dim = dat.shape[1]
+  manifold = pymanopt.manifolds.Sphere(dim)
+
+  @pymanopt.function.autograd(manifold)
+  def objective(p):
+    projections = dat @ p[:,None]
+    scaled = dat * projections
+    remainders = scaled - dat
+    return (remainders * remainders).sum()
+
+  @pymanopt.function.autograd(manifold)
+  def jac(p):
+    projections = dat @ p[:, None]
+    diffs = projections*dat - dat
+    scalings = (diffs * dat).sum(axis=1)*2
+    return (dat*scalings[:,None]).sum(axis=0)
+
+  problem = pymanopt.Problem(manifold=manifold, cost=objective, euclidean_gradient=jac)
+  optimizer = pymanopt.optimizers.SteepestDescent()
+  result = optimizer.run(problem)
+
+  return result.point
 
 def test1():
   dat = np.random.rand(7,3) *2 -1
