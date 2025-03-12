@@ -170,7 +170,8 @@ def summed_dir(dat: np.ndarray) -> np.ndarray:
 
   problem = pymanopt.Problem(manifold=manifold, cost=objective, euclidean_gradient=jac)
   optimizer = pymanopt.optimizers.SteepestDescent()
-  result = optimizer.run(problem)
+  init = _summed_dir(dat)
+  result = optimizer.run(problem, initial_point=init)
 
   return result.point
 
