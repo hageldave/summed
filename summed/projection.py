@@ -170,7 +170,7 @@ def summed_dir(dat: np.ndarray) -> np.ndarray:
 
   problem = pymanopt.Problem(manifold=manifold, cost=objective, euclidean_gradient=jac)
   optimizer = pymanopt.optimizers.SteepestDescent()
-  init = _summed_dir(dat)
+  init = normalize_vec(dat.mean(axis=0)+1e-6) #_summed_dir(dat)
   result = optimizer.run(problem, initial_point=init)
 
   return result.point
@@ -200,8 +200,32 @@ def test2():
   cov = dat.T @ dat
 
 
+def power_iter_XTX(X, randseed=None, verbose=True):
+  rvec = np.random.default_rng(seed=randseed).random(size=X.shape[1])
+  v = normalize_vec(rvec*2-1)
+  for i in range(32):
+    v_new = X.T @ (X @ v)
+    v_new = normalize_vec(v_new)
+    diff = np.dot(v,v_new)
+    v = v_new
+    if verbose:
+      print(f"power iteration {i}, diff = {diff}")
+
+    if diff > 1.0 - 1e-5:
+      break
+
+  return v
 
 
+def eigenvecs_XTX(X, num_vecs):
+  dirs = np.array([])
+  for i in range(0, num_vecs):
+    dir = power_iter_XTX(X)
+    dir_as_col = dir[:, None]
+    dirs = np.hstack((dirs, dir_as_col)) if dirs.size else dir_as_col
+    scale = X @ dir_as_col
+    X = X - (scale * dir)
+  return dirs
 
 
 
